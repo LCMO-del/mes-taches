@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mes tâches</title>
+<meta name="theme-color" content="#1C1917">
+<meta name="description" content="Dictez vos tâches à la voix, retrouvez-les triées, même sans réseau.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mes tâches">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>Mes tâches</h1>
+      <div class="sub"><span id="today"></span><span class="net" id="net">En ligne</span></div>
+    </div>
+    <button class="menuBtn" id="btnMenu" aria-label="Menu">⋯</button>
+  </header>
+
+  <div id="banners"></div>
+
+  <div class="stats">
+    <div class="stat red"><b id="sLate">0</b><span>En retard</span></div>
+    <div class="stat"><b id="sToday">0</b><span>Aujourd'hui</span></div>
+    <div class="stat"><b id="sDone">0</b><span>Faites (7 jours)</span></div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button data-f="todo" class="on">À faire</button>
+    <button data-f="today">Aujourd'hui</button>
+    <button data-f="done">Terminées</button>
+  </div>
+  <div class="projects" id="projects"></div>
+
+  <div id="list"></div>
+</div>
+
+<div class="fab">
+  <button class="kbd" id="btnType" aria-label="Écrire une tâche">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1C1917" stroke-width="2" stroke-linecap="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+  </button>
+  <button class="mic" id="btnMic" aria-label="Dicter une tâche">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>
+  </button>
+</div>
+
+<!-- dictée -->
+<div class="veil" id="vDict">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+    <h3 id="dTitle">Nouvelle tâche</h3>
+    <p class="hint" id="dictHint"></p>
+    <div class="live" id="liveRow">
+      <button class="bigmic" id="bigMic" aria-label="Micro">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>
+      </button>
+      <div class="livetxt" id="liveTxt">Touchez le micro pour parler</div>
+    </div>
+    <div class="warn" id="micWarn" role="alert"></div>
+    <textarea id="txt" aria-label="Texte de la tâche" placeholder="Ex. : Vérifier la pompe de la ligne 3 avant jeudi, urgent, et appeler le fournisseur demain à 10h."></textarea>
+    <div class="partial" id="partial" aria-live="polite"></div>
+    <div class="ex" id="exBox">💡 Dites par exemple : « <b>Commander les joints pour la presse 2, urgent, et envoyer le rapport vendredi</b> ». L’appli propose les tâches, la date, l’heure et l’urgence. <b>Vous vérifiez avant d’ajouter.</b><br>📵 Sans réseau : touchez le micro 🎤 de votre clavier.</div>
+    <div id="previews"></div>
+    <div class="row" id="rowA">
+      <button class="btn" id="cancelD">Annuler</button>
+      <button class="btn pri" id="analyse">Préparer les tâches</button>
+    </div>
+    <div class="row" id="rowB" style="display:none">
+      <button class="btn" id="backD">Modifier le texte</button>
+      <button class="btn terra" id="addAll">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- édition -->
+<div class="veil" id="vEdit">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="eHead">
+    <h3 id="eHead">Modifier la tâche</h3>
+    <label for="eTitle">Tâche</label>
+    <input id="eTitle">
+    <div class="two">
+      <div><label for="eDate">Échéance</label><input type="date" id="eDate"></div>
+      <div><label for="eTime">Heure</label><input type="time" id="eTime"></div>
+    </div>
+    <label>Priorité</label>
+    <div class="prio" id="ePrio">
+      <button data-p="haute" class="haute">Urgent</button>
+      <button data-p="normale" class="normale">Normal</button>
+      <button data-p="basse" class="basse">Pas pressé</button>
+    </div>
+    <label for="eProj">Projet / machine</label>
+    <select id="eProj"></select>
+    <input id="eNewProj" placeholder="Nom du nouveau projet (ex. Ligne 4)" style="display:none;margin-top:8px">
+    <div class="row">
+      <button class="btn del" id="eDel">Supprimer</button>
+      <button class="btn" id="eCancel">Annuler</button>
+      <button class="btn pri" id="eSave">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- reporter -->
+<div class="veil" id="vPost">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="rHead">
+    <h3 id="rHead">Reporter à…</h3>
+    <p class="hint" id="rTask"></p>
+    <div class="postopts" id="postOpts"></div>
+    <label for="rDate">Ou choisir une date</label>
+    <input type="date" id="rDate">
+    <div class="row">
+      <button class="btn" id="rCancel">Annuler</button>
+      <button class="btn pri" id="rOk">Reporter</button>
+    </div>
+  </div>
+</div>
+
+<!-- projet -->
+<div class="veil" id="vProj">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pHead">
+    <h3 id="pHead">Nouveau projet ou machine</h3>
+    <p class="hint">Par exemple « Ligne 4 », « Presse 2 », « Chantier Gosselies ». Les tâches qui le citent y seront rangées toutes seules.</p>
+    <input id="pName" placeholder="Nom du projet">
+    <div class="row">
+      <button class="btn" id="pCancel">Annuler</button>
+      <button class="btn pri" id="pSave">Créer</button>
+    </div>
+  </div>
+</div>
+
+<!-- menu -->
+<div class="veil" id="vMenu">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mHead">
+    <h3 id="mHead">Mes données</h3>
+    <p class="note" id="mInfo"></p>
+
+    <div class="menu-sec">
+      <h4>Sauvegarde</h4>
+      <p class="note">Un fichier à garder (mail, Drive, ordinateur). Il permet de tout retrouver si le téléphone est changé ou réinitialisé.</p>
+      <button class="btn full" id="mExport">💾 Sauvegarder mes tâches</button>
+      <button class="btn full" id="mImport">📂 Restaurer depuis un fichier</button>
+      <input type="file" id="fileIn" accept=".json,application/json">
+      <button class="btn full" id="mCopy">📋 Partager ma liste (texte)</button>
+    </div>
+
+    <div class="menu-sec">
+      <h4>Installer sur l’écran d’accueil</h4>
+      <button class="btn full" id="mInstall" style="display:none">⬇️ Installer l’application</button>
+      <div id="guide"></div>
+    </div>
+
+    <div class="menu-sec">
+      <h4>Confidentialité et micro</h4>
+      <p class="note">🔒 Vos tâches restent sur cet appareil : aucun compte, aucun serveur, aucune publicité.</p>
+      <p class="note">🎤 La dictée intégrée utilise le service vocal de votre téléphone (Google sur Android, Apple sur iPhone). Le son peut passer par ce service, et il faut du réseau. Sans réseau, utilisez le micro 🎤 de votre clavier : le texte s’écrit tout seul, et l’appli le range.</p>
+    </div>
+
+    <div class="menu-sec">
+      <button class="btn full" id="mReset">🗑️ Tout effacer</button>
+      <p class="note" id="mAbout"></p>
+    </div>
+    <div class="row"><button class="btn" id="mClose">Fermer</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"><span id="toastTxt"></span><button id="toastUndo">Annuler</button></div>
+
+<script src="parser.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
